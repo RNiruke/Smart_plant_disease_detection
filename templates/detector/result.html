@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Diagnosis Result — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Page Header -->
+    <div class="dash-header mb-4">
+      <h1 class="page-title mb-1">AI Diagnosis Report</h1>
+      <p class="text-muted small">Leaf disease classification, prediction confidence levels, and severity analyses.</p>
+    </div>
+
+    <!-- Diagnostic Details Section -->
+    <div class="row g-4 mb-4">
+      <!-- ── LEFT COLUMN: Uploaded Leaf Image ─────────────────────────── -->
+      <div class="col-lg-5 col-md-12">
+        <div class="card border-0 h-100 shadow-sm overflow-hidden">
+          <div class="position-relative">
+            <img src="{{ detection.image.url }}" alt="Uploaded Leaf" class="img-fluid w-100" style="max-height: 420px; object-fit: cover;" />
+
+            <!-- Severity Badge Overlay -->
+            <span class="position-absolute badge shadow d-flex align-items-center gap-2" style="top: 16px; left: 16px; font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 30px; letter-spacing: 0.02em; 
+                         background-color: {% if detection.severity == 'Healthy' %}#2d6a4f{% elif detection.severity == 'Low' %}#f9a825{% elif detection.severity == 'Medium' %}#ef6c00{% else %}#c62828{% endif %}; 
+                         color: {% if detection.severity == 'Low' %}#000000{% else %}#ffffff{% endif %};">
+              <i class="bi {{ severity_icon }}"></i>
+              {{ detection.severity }}
+            </span>
+          </div>
+          <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+            <p class="text-muted small mb-0">Analyzed on: <strong class="text-white">{{ detection.created_at|date:"d M Y, H:i"|default:"Today" }}</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT COLUMN: Prediction Results Card ────────────────────── -->
+      <div class="col-lg-7 col-md-12">
+        <div class="card border-0 h-100 shadow-sm">
+          <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
+            <div>
+              <div class="row align-items-center mb-4">
+                <div class="col-sm-8">
+                  <span class="text-muted small text-uppercase fw-700" style="letter-spacing: 0.05em;">Diagnosed Target</span>
+                  <h2 class="fw-800 text-white mt-1 mb-1" style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; line-height: 1.2;">
+                    {{ detection.plant|capfirst }}
+                  </h2>
+                  <h5 class="fw-600 mt-0" style="font-family: 'Outfit', sans-serif; color: {% if detection.severity == 'Healthy' %}#52b788{% elif detection.severity == 'Low' %}#ffcc80{% elif detection.severity == 'Medium' %}#ffb74d{% else %}#e57373{% endif %};">
+                    {{ detection.disease }}
+                  </h5>
+                </div>
+
+                <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
+                  <div class="d-inline-block text-center p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); min-width: 120px; border-radius: 12px;">
+                    <span class="d-block text-muted x-small" style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Confidence</span>
+                    <span class="fw-800 text-plant" style="font-size: 1.8rem; font-family: 'Outfit', sans-serif;">{{ detection.confidence }}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Confidence Progress Bar -->
+              <div class="mb-4">
+                <div class="progress" style="height: 10px; background: rgba(255, 255, 255, 0.08); border-radius: 10px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success animate-width"
+                    role="progressbar"
+                    style="width: {{ detection.confidence }}%; border-radius: 10px; background-color: var(--plant-green) !important;"
+                    aria-valuenow="{{ detection.confidence }}" aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                </div>
+              </div>
+
+              <hr class="border-secondary my-4" style="opacity: 0.15;" />
+
+              <!-- Condition Celebration or Warning Card -->
+              {% if detection.is_healthy %}
+              <!-- Healthy Celebration Card -->
+              <div class="p-3 mb-4" style="background: rgba(46, 125, 50, 0.08); border: 1px solid rgba(46, 125, 50, 0.2); border-radius: 12px;">
+                <h5 class="fw-700 text-white mb-2" style="font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 10px; color: #81c784 !important;">
+                  <i class="bi bi-patch-check-fill fs-4"></i> Healthy Crop Condition Certified!
+                </h5>
+                <p class="text-muted small mb-0">
+                  Excellent! Our AI scanning analysis found no signs of active pathogens, leaf spots, mildew, or nutrient deficiency. Keep maintaining your standard watering and fertilization routine.
+                </p>
+              </div>
+              {% else %}
+              <!-- Disease Warning Card -->
+              <div class="p-3 mb-4" style="background: rgba(198, 40, 40, 0.08); border: 1px solid rgba(198, 40, 40, 0.2); border-radius: 12px;">
+                <h5 class="fw-700 text-white mb-2" style="font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 10px; color: #ef9a9a !important;">
+                  <i class="bi bi-shield-fill-exclamation fs-4"></i> Infection / Pathogen Detected
+                </h5>
+                <p class="text-muted small mb-3">
+                  Warning: The model detected disease patterns on the leaf tissue. We suggest consulting the tailored advisory system for remedial organic treatments or direct containment steps.
+                </p>
+                <a href="{% url 'advisory:detail' detection.disease_name %}" class="btn btn-sm btn-outline-plant d-inline-flex align-items-center gap-2">
+                  <i class="bi bi-file-earmark-medical"></i> View Targeted Treatment Plan
+                </a>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Two Main Action Buttons -->
+            <div class="d-flex flex-wrap gap-3 mt-auto pt-3">
+              <a href="{% url 'detector:upload' %}" class="btn btn-plant-primary btn-lg px-4 flex-grow-1 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-camera"></i>
+                <span>Upload Another</span>
+              </a>
+              <a href="{% url 'reports:history' %}" class="btn btn-outline-light btn-lg px-4 flex-grow-1 d-flex align-items-center justify-content-center gap-2" style="border: 1px solid rgba(255,255,255,0.15); background: transparent;">
+                <i class="bi bi-clock-history"></i>
+                <span>View History</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOTTOM SECTION: Top 3 Predictions Table ──────────────────── -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <h5 class="fw-700 text-white mb-4" style="font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 10px;">
+              <i class="bi bi-bar-chart-line text-success" style="color: var(--plant-green) !important;"></i>
+              Alternative Probabilities &amp; Predictions
+            </h5>
+
+            {% if top3 %}
+            <div class="table-responsive">
+              <table class="table align-middle text-white mb-0" style="background: transparent;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                    <th class="py-3 ps-3">Plant &amp; Diagnosed Disease Candidate</th>
+                    <th class="py-3 text-end pe-3">Model Confidence Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in top3 %}
+                  <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                    <td class="py-3 ps-3">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="fw-600">{{ item.class }}</span>
+                      </div>
+                    </td>
+                    <td class="py-3 text-end pe-3">
+                      <div class="d-flex align-items-center justify-content-end gap-3">
+                        <div class="progress" style="width: 140px; height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 10px;">
+                          <div class="progress-bar bg-success animate-width" role="progressbar" style="width: {{ item.confidence }}%; border-radius: 10px; background-color: var(--plant-green) !important;"></div>
+                        </div>
+                        <span class="fw-700 text-plant" style="font-size: 0.9rem;">{{ item.confidence }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted small">
+              No alternative crop leaf disease candidates calculated for this diagnosis.
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @keyframes animateWidth {
+    from {
+      width: 0%;
+    }
+  }
+
+  .animate-width {
+    animation: animateWidth 1.2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+  }
+</style>
+{% endblock %}

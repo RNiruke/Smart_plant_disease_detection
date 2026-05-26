@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block title %}AI Disease Detector — PlantAI{% endblock %}
+
+{% block content %}
+<style>
+  /* Page background constraint to keep the main viewport dark */
+  .dashboard-main {
+    background-color: #0f0f0f !important;
+  }
+
+  /* Page title & subtitle */
+  .page-title-custom {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+  }
+  .page-subtitle-custom {
+    color: #8892a4 !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Instruction Card Style overrides to prevent white backgrounds */
+  .instruction-card {
+    background-color: #1a1a1a !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+  }
+  .instruction-card-title {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+  }
+  .instruction-card small {
+    color: #e2e8f0 !important;
+    font-size: 0.85rem !important;
+    font-weight: 400 !important;
+  }
+
+  /* Main Upload Card Style overrides */
+  .upload-card-custom {
+    background-color: #1a1a1a !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+  }
+
+  /* Custom Drag & Drop Uploader Zone */
+  .drop-zone-custom {
+    border: 2px dashed #22c55e !important;
+    border-radius: 12px !important;
+    background-color: #161616 !important;
+    padding: 3rem 2rem !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    min-height: 220px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  .drop-zone-custom:hover, .drop-zone-custom.drag-over {
+    border-color: #22c55e !important;
+    background-color: rgba(34, 197, 94, 0.08) !important;
+  }
+  
+  .drop-zone-custom h4 {
+    color: #22c55e !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 700 !important;
+  }
+  .drop-zone-custom p {
+    color: #8892a4 !important;
+  }
+
+  /* Submit Button styling */
+  .btn-analyze-custom {
+    background: linear-gradient(135deg, #22c55e, #15803d) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s !important;
+    box-shadow: 0 2px 12px rgba(34,197,94,0.3) !important;
+  }
+  .btn-analyze-custom:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(34,197,94,0.45) !important;
+    color: #ffffff !important;
+  }
+  .btn-analyze-custom:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+  }
+  
+  /* Image Preview Adjustments */
+  .preview-img-custom {
+    max-height: 300px !important;
+    max-width: 100% !important;
+    border-radius: 12px !important;
+    object-fit: contain !important;
+    border: 1px solid #2a2a2a !important;
+  }
+</style>
+
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Page Header -->
+    <div class="dash-header mb-4">
+      <h1 class="page-title-custom mb-1">AI Plant Disease Detection</h1>
+      <p class="page-subtitle-custom mb-0">Upload a clear photo of a plant leaf to detect diseases instantly using our AI model.</p>
+    </div>
+
+    <!-- Upload Form Row -->
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10 col-12">
+        
+        <!-- Instructions Card -->
+        <div class="card instruction-card border-0 mb-4 shadow-sm">
+          <div class="card-body p-4">
+            <h5 class="instruction-card-title mb-3">
+              <i class="bi bi-info-circle text-success me-2"></i>Instructions
+            </h5>
+            <div class="row text-center g-3">
+              <div class="col-md-3 col-6">
+                <div style="font-size:2rem; margin-bottom:8px;">📸</div>
+                <small class="d-block">Take a clear photo of the leaf</small>
+              </div>
+              <div class="col-md-3 col-6">
+                <div style="font-size:2rem; margin-bottom:8px;">☀️</div>
+                <small class="d-block">Ensure good, even lighting</small>
+              </div>
+              <div class="col-md-3 col-6">
+                <div style="font-size:2rem; margin-bottom:8px;">🍃</div>
+                <small class="d-block">Single leaf preferred</small>
+              </div>
+              <div class="col-md-3 col-6">
+                <div style="font-size:2rem; margin-bottom:8px;">📁</div>
+                <small class="d-block">JPG/PNG/WEBP up to 5MB</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="card upload-card-custom border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            
+            <!-- Error messages -->
+            {% if form.errors %}
+            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-20 text-danger mb-4" style="border-radius: 10px;">
+              {% for error in form.non_field_errors %}
+                {{ error }}
+              {% endfor %}
+              {% for field in form %}
+                {% for error in field.errors %}
+                  {{ error }}
+                {% endfor %}
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+              {% csrf_token %}
+              
+              <!-- Drag and Drop Zone -->
+              <div id="dropZone" class="drop-zone-custom" onclick="document.getElementById('imageInput').click()">
+                
+                <div id="uploadPrompt">
+                  <div class="drop-icon mb-3" style="font-size: 3rem;">🌿</div>
+                  <h4 class="mb-2">Drop your leaf image here</h4>
+                  <p class="mb-2">or click to browse files</p>
+                  <p class="x-small mb-0">Supports: JPG, JPEG, PNG, WEBP (Max 5MB)</p>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="imagePreview" style="display:none;">
+                  <img id="previewImg" class="preview-img-custom" src="" alt="Preview"/>
+                  <p class="text-success fw-600 mt-3 mb-1" id="fileName"></p>
+                  <p class="text-muted small mb-0" id="fileSize"></p>
+                </div>
+              </div>
+
+              <!-- Hidden file input -->
+              <input type="file" 
+                     id="imageInput" 
+                     name="image"
+                     accept="image/*"
+                     style="display:none"
+                     onchange="previewImage(this)">
+
+              <!-- Submit Button -->
+              <div class="mt-4 text-center">
+                <button type="submit" 
+                        id="submitBtn"
+                        class="btn btn-analyze-custom px-5 py-2.5 btn-lg"
+                        disabled>
+                  <i class="bi bi-search me-2"></i>Analyze Plant
+                </button>
+                <p class="text-muted small mt-2 mb-0">
+                  Our advanced AI model will diagnose the leaf image.
+                </p>
+              </div>
+
+            </form>
+
+            <!-- Loading Spinner (hidden by default) -->
+            <div id="loadingSpinner" style="display:none; text-align:center; padding:2rem;">
+              <div class="spinner-border text-success" style="width:3rem; height:3rem;"></div>
+              <h5 class="text-white mt-3">🤖 AI is analyzing your plant...</h5>
+              <p class="text-muted mb-0">Please wait 10-30 seconds</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Client side size check
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File too large! Maximum size is 5MB.');
+            input.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('fileName').textContent = '✅ ' + file.name;
+            document.getElementById('fileSize').textContent = 
+                'Size: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('uploadPrompt').style.display = 'none';
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('submitBtn').disabled = false;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', function(e) {
+    this.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('imageInput').files = files;
+        previewImage(document.getElementById('imageInput'));
+    }
+});
+
+// Loading spinner on submit
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('submitBtn').style.display = 'none';
+});
+</script>
+{% endblock %}

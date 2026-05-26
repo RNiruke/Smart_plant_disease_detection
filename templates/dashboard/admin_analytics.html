@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-layout">
+  {% include 'partials/sidebar.html' %}
+  
+  <div class="dashboard-main animate-fade-up">
+    <!-- Header Title -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="page-title mb-1">Admin Control Center</h1>
+        <p class="text-muted small mb-0">Real-time system health, detection insights, and user base administration.</p>
+      </div>
+      <div>
+        <span class="badge bg-plant-soft px-3 py-2 fs-7 fw-600 rounded-3">
+          <i class="bi bi-shield-check me-2"></i>Admin Access Granted
+        </span>
+      </div>
+    </div>
+
+    <div id="analyticsSections">
+      
+      <!-- 1. OVERVIEW SECTION -->
+      <section id="overview" class="mb-5 animate-fade-up">
+        <h2 class="h4 mb-4 text-white d-flex align-items-center gap-2">📊 System Overview</h2>
+        
+        <!-- Stats Cards Grid -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-glow h-100">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="stat-card-label mt-0">Total Registered Users</span>
+                <div class="stat-icon-wrap bg-primary bg-opacity-10 text-primary">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+              </div>
+              <div class="stat-card-num">{{ total_users }}</div>
+              <p class="x-small text-muted mb-0 mt-2">
+                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>{{ active_users }} Active</span> · {{ suspended_users }} Suspended
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-glow h-100">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="stat-card-label mt-0">Detections Diagnosed</span>
+                <div class="stat-icon-wrap bg-success bg-opacity-10 text-success">
+                  <i class="bi bi-clipboard2-pulse-fill"></i>
+                </div>
+              </div>
+              <div class="stat-card-num">{{ total_detections }}</div>
+              <p class="x-small text-muted mb-0 mt-2">
+                <span class="text-plant"><i class="bi bi-flower1 me-1"></i>{{ healthy_count }} Healthy</span> · {{ diseased_count }} Infected
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-glow h-100">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="stat-card-label mt-0">Average AI Confidence</span>
+                <div class="stat-icon-wrap bg-warning bg-opacity-10 text-warning">
+                  <i class="bi bi-check2-all"></i>
+                </div>
+              </div>
+              <div class="stat-card-num">{{ avg_confidence }}%</div>
+              <p class="x-small text-muted mb-0 mt-2">
+                <i class="bi bi-info-circle me-1"></i>System model classification metric
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-glow h-100">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="stat-card-label mt-0">Administrators</span>
+                <div class="stat-icon-wrap bg-danger bg-opacity-10 text-danger">
+                  <i class="bi bi-shield-lock-fill"></i>
+                </div>
+              </div>
+              <div class="stat-card-num">{{ staff_users }}</div>
+              <p class="x-small text-muted mb-0 mt-2">
+                <i class="bi bi-person-workspace me-1"></i>Staff members with system access
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts and Key Trends -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-8">
+            <div class="chart-card h-100">
+              <h6 class="chart-title"><i class="bi bi-graph-up me-2 text-plant"></i>Scan Traffic Trends (Last 7 Days)</h6>
+              <div class="chart-container-wrap">
+                <canvas id="trendChart" height="240"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="chart-card h-100">
+              <h6 class="chart-title"><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Infection Severity Breakdown</h6>
+              <div class="chart-container-wrap d-flex align-items-center justify-content-center">
+                <canvas id="severityChart" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Uploads Table -->
+        <div class="chart-card">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="chart-title mb-0"><i class="bi bi-camera-fill me-2 text-plant"></i>Recent Image Uploads</h6>
+            <a href="{% url 'reports:history' %}" class="btn btn-outline-plant btn-xs">View History Logs</a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-white">
+              <thead>
+                <tr class="text-muted small">
+                  <th>Image</th>
+                  <th>Crop</th>
+                  <th>Diagnosis</th>
+                  <th>AI Confidence</th>
+                  <th>Severity</th>
+                  <th>Uploaded By</th>
+                  <th>Timestamp</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for upload in recent_uploads %}
+                <tr>
+                  <td>
+                    <a href="{% url 'detector:result' upload.pk %}" class="d-inline-block rounded-2 overflow-hidden border border-secondary" style="width: 48px; height: 48px;">
+                      <img src="{{ upload.image.url }}" alt="Scan" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                  </td>
+                  <td>
+                    <span class="fw-600">{{ upload.crop_name }}</span>
+                  </td>
+                  <td>
+                    {% if upload.is_healthy %}
+                    <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Healthy Tissue</span>
+                    {% else %}
+                    <span class="text-danger-soft fw-500">{{ upload.disease }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="small fw-600">{{ upload.confidence|floatformat:1 }}%</span>
+                      <div class="progress flex-grow-1" style="height: 6px; width: 60px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ upload.confidence }}%; border-radius: 3px;"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-{{ upload.severity_badge }} text-white">
+                      {{ upload.severity|default:"None" }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      {% if upload.user.profile_picture %}
+                        <img src="{{ upload.user.profile_picture.url }}" class="user-pic-img" style="width:24px; height:24px;" alt="Avatar">
+                      {% else %}
+                        <span class="avatar-sm" style="width:24px; height:24px; font-size:0.7rem;">{{ upload.user.username|first|upper }}</span>
+                      {% endif %}
+                      <span class="x-small fw-500">{{ upload.user.get_full_name|default:upload.user.username }}</span>
+                    </div>
+                  </td>
+                  <td class="text-muted small">
+                    {{ upload.timestamp|date:"d M H:i" }}
+                  </td>
+                  <td class="text-end">
+                    <a href="{% url 'detector:result' upload.pk %}" class="btn btn-outline-light btn-xs py-1 px-2 border-secondary" style="font-size: 0.75rem;">
+                      <i class="bi bi-eye"></i> View Result
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">No recent uploads registered in the system.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- 2. CROPS & DISEASES SECTION -->
+      <section id="crop-insights" class="mb-5 animate-fade-up section-divider">
+        <h2 class="h4 mb-4 text-white d-flex align-items-center gap-2">🌿 Crop &amp; Disease Insights</h2>
+        <div class="row g-4">
+          <!-- Crop Volume Distribution Chart -->
+          <div class="col-lg-7">
+            <div class="chart-card h-100">
+              <h6 class="chart-title"><i class="bi bi-bar-chart-line-fill me-2 text-plant"></i>Most Frequently Scanned Crops</h6>
+              <div class="chart-container-wrap">
+                <canvas id="cropChart" height="260"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Pathogens ranking -->
+          <div class="col-lg-5">
+            <div class="chart-card h-100">
+              <h6 class="chart-title"><i class="bi bi-trophy-fill me-2 text-warning"></i>Most Common Plant Pathogens</h6>
+              <p class="text-muted small mb-3">Ranking of crop diseases detected, excluding healthy leaf specimens.</p>
+              
+              <div class="disease-rank-list pr-1">
+                {% for d in top_diseases %}
+                <div class="disease-rank-item mb-2 border border-secondary p-3" style="background: var(--bg-card2); border-radius: 12px;">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge bg-plant-soft text-plant fw-bold fs-7">{{ forloop.counter }}</span>
+                      <span class="fw-700 text-white">{{ d.disease_name }}</span>
+                    </div>
+                    <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-20">{{ d.count }} Scans</span>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between text-muted x-small">
+                    <span>Host Crop: <strong>{{ d.crop_name }}</strong></span>
+                    <a href="{% url 'advisory:detail' d.disease_name %}" class="text-plant fw-600 text-decoration-none">
+                      Treatment Plan <i class="bi bi-arrow-right small"></i>
+                    </a>
+                  </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-5">
+                  <i class="bi bi-shield-check fs-1 text-success mb-2"></i>
+                  <p>No agricultural disease reports registered in system yet.</p>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. USER MANAGEMENT SECTION -->
+      <section id="user-management" class="mb-5 animate-fade-up section-divider">
+        <h2 class="h4 mb-4 text-white d-flex align-items-center gap-2">👥 User Management</h2>
+        
+        <!-- Search and Filter Form -->
+        <div class="filter-bar mb-4">
+          <form method="get" action="{% url 'dashboard:analytics' %}" class="row g-3">
+            <div class="col-md-5">
+              <div class="input-icon-wrap">
+                <i class="bi bi-search input-icon"></i>
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by username, name, email...">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <select name="status" class="form-select">
+                <option value="" {% if not status_filter %}selected{% endif %}>All Accounts</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Users Only</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Suspended Users Only</option>
+                <option value="staff" {% if status_filter == 'staff' %}selected{% endif %}>Administrators / Staff Only</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+              <button type="submit" class="btn btn-plant-primary px-3 flex-grow-1">
+                <i class="bi bi-funnel me-2"></i>Filter
+              </button>
+              {% if q or status_filter %}
+              <a href="{% url 'dashboard:analytics' %}" class="btn btn-outline-light border-secondary">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+
+        <!-- Users Directory Table -->
+        <div class="chart-card">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="chart-title mb-0"><i class="bi bi-person-rolodex me-2 text-plant"></i>Registered User Directory</h6>
+            <span class="text-muted x-small">Found {{ users_list.count }} user account{{ users_list.count|pluralize }}</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-white">
+              <thead>
+                <tr class="text-muted small">
+                  <th>User Profile</th>
+                  <th>Email</th>
+                  <th>Joined Date</th>
+                  <th>Scans Count</th>
+                  <th>Status</th>
+                  <th>Role</th>
+                  <th class="text-end">Administrative Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users_list %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-3">
+                      {% if u.profile_picture %}
+                        <img src="{{ u.profile_picture.url }}" class="user-pic-img" alt="Avatar">
+                      {% else %}
+                        <div class="user-avatar-initials">{{ u.username|first|upper }}</div>
+                      {% endif %}
+                      <div>
+                        <div class="fw-700 text-white">{{ u.get_full_name|default:u.username }}</div>
+                        <div class="text-muted x-small">@{{ u.username }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="small">{{ u.email }}</td>
+                  <td class="text-muted small">{{ u.date_joined|date:"d M Y" }}</td>
+                  <td>
+                    <span class="badge bg-plant-soft text-plant fw-bold px-2 py-1 fs-8">
+                      <i class="bi bi-camera me-1"></i>{{ u.detection_count }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if u.is_active %}
+                      <span class="badge bg-success-subtle text-success border border-success border-opacity-20 px-2 py-1">Active</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-20 px-2 py-1">Suspended</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if u.is_superuser %}
+                      <span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-shield-fill-check me-1"></i>Superuser</span>
+                    {% elif u.is_staff %}
+                      <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-shield-lock-fill me-1"></i>Staff Admin</span>
+                    {% else %}
+                      <span class="badge bg-secondary-subtle text-muted px-2 py-1">Regular User</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <div class="action-btn-group justify-content-end">
+                      {% if u == request.user %}
+                        <span class="text-muted small px-3 py-1"><i class="bi bi-person-fill-lock"></i> Current User</span>
+                      {% else %}
+                        <!-- Toggle Status form -->
+                        <form method="post" action="{% url 'dashboard:analytics' %}" class="action-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="user_id" value="{{ u.id }}">
+                          <input type="hidden" name="action" value="toggle_status">
+                          {% if u.is_active %}
+                            <button type="submit" class="btn btn-outline-danger btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Suspend User Account">
+                              <i class="bi bi-slash-circle"></i> Suspend
+                            </button>
+                          {% else %}
+                            <button type="submit" class="btn btn-outline-success btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Activate User Account">
+                              <i class="bi bi-check-circle"></i> Activate
+                            </button>
+                          {% endif %}
+                        </form>
+
+                        <!-- Toggle Role form -->
+                        <form method="post" action="{% url 'dashboard:analytics' %}" class="action-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="user_id" value="{{ u.id }}">
+                          <input type="hidden" name="action" value="toggle_role">
+                          {% if u.is_staff %}
+                            <button type="submit" class="btn btn-outline-warning btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Revoke Admin Access">
+                              <i class="bi bi-shield-slash"></i> Revoke Staff
+                            </button>
+                          {% else %}
+                            <button type="submit" class="btn btn-outline-info btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Promote to Staff Admin">
+                              <i class="bi bi-shield-plus"></i> Make Staff
+                            </button>
+                          {% endif %}
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-5">
+                    <i class="bi bi-people fs-2"></i>
+                    <p class="mt-2">No user accounts found matching the criteria.</p>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Dynamic Charting via Chart.js
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Theme Constants to match PlantAI CSS
+    const fontConfig = {
+      family: "'Inter', sans-serif",
+      color: '#8892a4'
+    };
+    
+    // 1. Trend Chart (Line Chart - Scans Last 7 Days)
+    const trendLabels = {{ trend_labels|safe }};
+    const trendData   = {{ trend_data|safe }};
+    const trendCtx    = document.getElementById('trendChart');
+    
+    if (trendCtx) {
+      const gradient = trendCtx.getContext('2d').createLinearGradient(0, 0, 0, 240);
+      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.4)');
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.02)');
+      
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: trendLabels,
+          datasets: [{
+            label: 'Total Scans',
+            data: trendData,
+            borderColor: '#22c55e',
+            borderWidth: 3,
+            backgroundColor: gradient,
+            tension: 0.35,
+            fill: true,
+            pointBackgroundColor: '#22c55e',
+            pointBorderColor: '#0f1117',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              padding: 10,
+              backgroundColor: '#1a1f2e',
+              titleFont: { family: fontConfig.family, weight: 'bold' },
+              bodyFont: { family: fontConfig.family },
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: fontConfig.color, font: { family: fontConfig.family } }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { 
+                color: fontConfig.color, 
+                font: { family: fontConfig.family },
+                stepSize: 1 
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Severity Chart (Doughnut Chart)
+    const severityLabels = {{ severity_labels|safe }};
+    const severityData   = {{ severity_data|safe }};
+    const severityCtx    = document.getElementById('severityChart');
+    
+    if (severityCtx) {
+      new Chart(severityCtx, {
+        type: 'doughnut',
+        data: {
+          labels: severityLabels,
+          datasets: [{
+            data: severityData,
+            backgroundColor: [
+              '#ef4444', // Severe (Red)
+              '#f59e0b', // Moderate (Yellow)
+              '#3b82f6', // Low (Blue)
+              '#22c55e'  // Healthy (Green)
+            ],
+            borderWidth: 2,
+            borderColor: '#1a1f2e',
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e2e8f0',
+                padding: 12,
+                font: { family: fontConfig.family, size: 11 }
+              }
+            },
+            tooltip: {
+              padding: 10,
+              backgroundColor: '#1a1f2e',
+              bodyFont: { family: fontConfig.family },
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1
+            }
+          }
+        }
+      });
+    }
+
+    // 3. Crop Distribution Chart (Horizontal Bar Chart)
+    const cropLabels = {{ crop_labels|safe }};
+    const cropData   = {{ crop_data|safe }};
+    const cropCtx    = document.getElementById('cropChart');
+    
+    if (cropCtx) {
+      new Chart(cropCtx, {
+        type: 'bar',
+        data: {
+          labels: cropLabels,
+          datasets: [{
+            label: 'Scan Count',
+            data: cropData,
+            backgroundColor: 'rgba(34, 197, 94, 0.75)',
+            hoverBackgroundColor: '#22c55e',
+            borderRadius: 6,
+            borderWidth: 0,
+            barThickness: 16
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              padding: 10,
+              backgroundColor: '#1a1f2e',
+              bodyFont: { family: fontConfig.family },
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { 
+                color: fontConfig.color, 
+                font: { family: fontConfig.family },
+                stepSize: 1
+              }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: '#e2e8f0', font: { family: fontConfig.family, weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    // Dynamic sidebar link highlighting based on current scroll position (ScrollSpy)
+    const sidebarOverview = document.getElementById('sidebar-overview');
+    const sidebarCrop     = document.getElementById('sidebar-crop-insights');
+    const sidebarUsers    = document.getElementById('sidebar-user-management');
+
+    const sections = [
+      { id: 'overview', link: sidebarOverview },
+      { id: 'crop-insights', link: sidebarCrop },
+      { id: 'user-management', link: sidebarUsers }
+    ];
+
+    function highlightActiveSection() {
+      let currentSectionId = 'overview';
+      const scrollPos = window.scrollY + 160; // offset for sticky header
+
+      sections.forEach(sec => {
+        const el = document.getElementById(sec.id);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            currentSectionId = sec.id;
+          }
+        }
+      });
+
+      sections.forEach(sec => {
+        if (sec.link) {
+          if (sec.id === currentSectionId) {
+            sec.link.classList.add('active');
+          } else {
+            sec.link.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    window.addEventListener('scroll', highlightActiveSection);
+    highlightActiveSection(); // Run immediately on load
+    setTimeout(highlightActiveSection, 300); // Trigger again after charts render
+
+  });
+</script>
+{% endblock %}

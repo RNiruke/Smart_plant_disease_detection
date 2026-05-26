@@ -1,0 +1,57 @@
+<!-- Sidebar partial -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">🌿</span>
+    <span class="sidebar-brand">PlantAI</span>
+  </div>
+  <nav class="sidebar-nav">
+    {% if user.is_staff %}
+      <!-- Show ADMIN ANALYTICS sidebar only -->
+      <div class="nav-section-label sidebar-section-label">ADMIN ANALYTICS</div>
+      <a href="{% url 'dashboard:analytics' %}#overview" class="sidebar-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" id="sidebar-overview">
+        <i class="bi bi-grid-1x2-fill"></i><span>📊 Overview</span>
+      </a>
+      <a href="{% url 'dashboard:analytics' %}#crop-insights" class="sidebar-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" id="sidebar-crop-insights">
+        <i class="bi bi-virus-fill"></i><span>🌿 Crop &amp; Disease</span>
+      </a>
+      <a href="{% url 'advisory:admin_table' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_table' or request.resolver_match.url_name == 'admin_add' or request.resolver_match.url_name == 'admin_edit' %}active{% endif %}" id="sidebar-disease-advisory">
+        <i class="bi bi-flower2"></i><span>🌿 Disease Advisory</span>
+      </a>
+      <a href="{% url 'dashboard:analytics' %}#user-management" class="sidebar-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" id="sidebar-user-management">
+        <i class="bi bi-people-fill"></i><span>👥 User Management</span>
+      </a>
+      <a href="{% url 'admin:index' %}" class="sidebar-link">
+        <i class="bi bi-shield-lock"></i><span>🛡️ Admin Panel</span>
+      </a>
+    {% else %}
+      <!-- Show regular user sidebar only -->
+      <div class="nav-section-label sidebar-section-label">MAIN</div>
+      <a href="{% url 'dashboard:home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' and request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i><span>🏠 Dashboard</span>
+      </a>
+      <a href="{% url 'detector:upload' %}" class="sidebar-link {% if request.resolver_match.namespace == 'detector' %}active{% endif %}">
+        <i class="bi bi-camera"></i><span>🔍 Detect Disease</span>
+      </a>
+      <a href="{% url 'advisory:list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'advisory' %}active{% endif %}">
+        <i class="bi bi-book"></i><span>📖 Advisory</span>
+      </a>
+      
+      <div class="nav-section-label sidebar-section-label mt-3">REPORTS</div>
+      <a href="{% url 'reports:history' %}" class="sidebar-link {% if request.resolver_match.namespace == 'reports' %}active{% endif %}">
+        <i class="bi bi-clock-history"></i><span>🕐 History</span>
+      </a>
+      <a href="{% url 'reports:download' %}" class="sidebar-link">
+        <i class="bi bi-download"></i><span>📥 Download CSV</span>
+      </a>
+    {% endif %}
+
+    <!-- Always show for both -->
+    <div class="nav-section-label sidebar-section-label mt-3">ACCOUNT</div>
+    <a href="{% url 'accounts:profile' %}" class="sidebar-link {% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="bi bi-person-circle"></i><span>👤 Profile</span>
+    </a>
+    <a href="{% url 'accounts:logout' %}" class="sidebar-link text-danger-soft">
+      <i class="bi bi-box-arrow-right"></i><span>🚪 Logout</span>
+    </a>
+  </nav>
+</aside>

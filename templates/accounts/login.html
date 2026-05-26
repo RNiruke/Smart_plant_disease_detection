@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load report_filters %}
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<div class="auth-page d-flex align-items-center min-vh-100">
+
+  <!-- Background glow -->
+  <div style="position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 45%,rgba(45,106,79,0.15),transparent);pointer-events:none;"></div>
+
+  <div class="container position-relative" style="z-index:1;">
+    <div class="row justify-content-center align-items-center g-5 py-5 min-vh-100">
+
+      <!-- ── Left: Brand panel ────────────────────────────────────────────── -->
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="px-3 py-4">
+          <div style="font-size:3.5rem;margin-bottom:1rem;">🌿</div>
+          <h2 style="font-family:'Outfit',sans-serif;font-size:2.4rem;font-weight:800;color:#fff;line-height:1.2;">
+            Welcome Back<br />to <span style="color:#52b788;">PlantAI</span>
+          </h2>
+          <p style="color:rgba(255,255,255,.6);margin-top:1rem;line-height:1.7;font-size:.95rem;">
+            Continue protecting your crops with AI-powered disease detection
+            and get expert treatment advice in seconds.
+          </p>
+
+          <!-- Feature bullets -->
+          <div style="margin-top:2rem;display:flex;flex-direction:column;gap:12px;">
+            {% for item in "🧠 AI Disease Detection with 95%+ accuracy,💊 Organic & Chemical Treatment Guidance,📊 Personal Dashboard & History Tracking"|split:"," %}
+            <div style="display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.75);font-size:.88rem;">
+              <span>{{ item }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Stats row -->
+          <div style="margin-top:2.5rem;display:flex;gap:2rem;">
+            <div>
+              <div style="font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:800;color:#52b788;">38+</div>
+              <div style="font-size:.72rem;color:#7d8590;margin-top:2px;">Disease Classes</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.08);"></div>
+            <div>
+              <div style="font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:800;color:#52b788;">95%+</div>
+              <div style="font-size:.72rem;color:#7d8590;margin-top:2px;">Accuracy</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.08);"></div>
+            <div>
+              <div style="font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:800;color:#52b788;">14</div>
+              <div style="font-size:.72rem;color:#7d8590;margin-top:2px;">Crop Types</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Right: Login card ────────────────────────────────────────────── -->
+      <div class="col-md-8 col-lg-4">
+        <div class="auth-card" style="background:#161b22;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:2.4rem;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+
+          <!-- Header -->
+          <div class="text-center mb-4">
+            <div class="d-lg-none" style="font-size:2rem;margin-bottom:.5rem;">🌿</div>
+            <h1 style="font-family:'Outfit',sans-serif;font-size:1.65rem;font-weight:800;color:#fff;margin-bottom:.25rem;">Sign In</h1>
+            <p style="color:#7d8590;font-size:.85rem;margin:0;">
+              Don't have an account?
+              <a href="{% url 'accounts:signup' %}" style="color:#52b788;font-weight:600;text-decoration:none;">Sign up free</a>
+            </p>
+          </div>
+
+          <!-- Form -->
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div class="mb-3">
+              <label class="form-label" style="font-size:.8rem;font-weight:600;color:rgba(255,255,255,.65);">Username</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#1c2128;border:1px solid rgba(255,255,255,.1);border-right:none;color:#7d8590;">
+                  <i class="bi bi-person"></i>
+                </span>
+                {{ form.username }}
+              </div>
+              {% if form.username.errors %}
+                <div style="color:#f85149;font-size:.77rem;margin-top:.3rem;"><i class="bi bi-exclamation-circle me-1"></i>{{ form.username.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="mb-4">
+              <label class="form-label" style="font-size:.8rem;font-weight:600;color:rgba(255,255,255,.65);">Password</label>
+              <div class="input-group" id="pwdGroup">
+                <span class="input-group-text" style="background:#1c2128;border:1px solid rgba(255,255,255,.1);border-right:none;color:#7d8590;">
+                  <i class="bi bi-lock"></i>
+                </span>
+                {{ form.password }}
+                <button type="button" class="input-group-text" style="background:#1c2128;border:1px solid rgba(255,255,255,.1);border-left:none;color:#7d8590;cursor:pointer;" onclick="togglePwd()">
+                  <i class="bi bi-eye" id="eyeIcon"></i>
+                </button>
+              </div>
+              {% if form.non_field_errors %}
+                <div style="color:#f85149;font-size:.77rem;margin-top:.4rem;"><i class="bi bi-exclamation-circle me-1"></i>{{ form.non_field_errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-ag w-100 btn-lg">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+
+            <!-- Divider -->
+            <div style="position:relative;text-align:center;margin:1.5rem 0;">
+              <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,.07);"></div>
+              <span style="position:relative;background:#161b22;padding:0 12px;color:#7d8590;font-size:.8rem;">or</span>
+            </div>
+
+            <!-- Guest shortcut -->
+            <a href="{% url 'advisory:list' %}" class="btn btn-outline-ag w-100">
+              <i class="bi bi-book me-2"></i>Browse Advisory (No Login)
+            </a>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inject Bootstrap styling into form inputs
+document.querySelectorAll('.auth-card input').forEach(el => {
+  el.style.cssText = 'background:#1c2128;border:1px solid rgba(255,255,255,.1);color:#e6edf3;border-radius:0;';
+  el.addEventListener('focus', () => { el.style.borderColor='#52b788'; el.style.boxShadow='0 0 0 3px rgba(82,183,136,.15)'; el.style.background='#1c2128'; });
+  el.addEventListener('blur',  () => { el.style.borderColor='rgba(255,255,255,.1)'; el.style.boxShadow='none'; });
+});
+function togglePwd() {
+  const inp  = document.getElementById('id_password');
+  const icon = document.getElementById('eyeIcon');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}Disease Advisory Management — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Header -->
+    <div class="dash-header d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+      <div>
+        <h1 class="page-title mb-1">🌿 Disease Advisory Management</h1>
+        <p class="text-muted small">Add, edit, or delete disease modules shown in the public Advisory Hub.</p>
+      </div>
+      <a href="{% url 'advisory:admin_add' %}" class="btn btn-plant-primary px-4 py-2 d-flex align-items-center gap-2" style="font-weight:600;">
+        <i class="bi bi-plus-lg fw-800"></i>
+        <span>Add Disease</span>
+      </a>
+    </div>
+
+    <!-- Success Toast -->
+    {% if messages %}
+      {% for message in messages %}
+      <div class="toast-alert mb-4 d-flex align-items-center gap-2 animate-fade-up" id="successToast">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close btn-close-white ms-auto" style="font-size:0.65rem;" onclick="this.parentElement.remove()"></button>
+      </div>
+      {% endfor %}
+    {% elif success %}
+      <div class="toast-alert mb-4 d-flex align-items-center gap-2 animate-fade-up" id="successToast">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ success }} ✓</span>
+        <button type="button" class="btn-close btn-close-white ms-auto" style="font-size:0.65rem;" onclick="this.parentElement.remove()"></button>
+      </div>
+    {% endif %}
+
+    <!-- Disease Advisory Directory -->
+    <div class="chart-card">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="chart-title mb-0"><i class="bi bi-flower2 me-2 text-plant"></i>Disease Advisory Directory</h6>
+        <span class="text-muted x-small">{{ diseases|length }} disease module{{ diseases|length|pluralize }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-white">
+          <thead>
+            <tr class="text-muted small">
+              <th style="width: 50px;">#</th>
+              <th>Disease Name</th>
+              <th>Crop Host</th>
+              <th style="width: 130px;">Severity</th>
+              <th>Pathogen</th>
+              <th style="width: 170px;">Last Updated</th>
+              <th class="text-end" style="width: 210px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for disease in diseases %}
+            <tr>
+              <td class="fw-600 text-muted">{{ forloop.counter }}</td>
+              <td class="fw-700 text-white" style="font-family:'Outfit',sans-serif;">{{ disease.disease_name }}</td>
+              <td class="text-muted small">{{ disease.plant }}</td>
+              <td>
+                <span class="badge badge-sev-{{ disease.severity_level|lower }} px-2 py-1" style="font-size:0.73rem; border-radius:6px; font-weight:600;">
+                  {{ disease.severity_level }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ disease.causes|truncatechars:40 }}</td>
+              <td class="text-muted small">{{ disease.updated_at|date:"M d, Y H:i" }}</td>
+              <td class="text-end">
+                <div class="action-btn-group justify-content-end">
+                  <a href="{% url 'advisory:admin_edit' disease.pk %}" class="btn btn-outline-success btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Edit Disease Module">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </a>
+                  <form method="post" action="{% url 'advisory:admin_delete' disease.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-xs px-2 py-1 d-inline-flex align-items-center gap-1" title="Delete Disease Module" onclick="return confirm('Delete {{ disease.disease_name|escapejs }}? This cannot be undone.')">
+                      <i class="bi bi-trash3"></i> Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-flower2 fs-1 text-plant mb-2 d-block"></i>
+                <p class="mt-2 mb-0">No disease modules found in the database.</p>
+                <a href="{% url 'advisory:admin_add' %}" class="btn btn-outline-plant btn-xs mt-3 px-3 py-1">+ Add Your First Module</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-overlay d-none">
+  <div class="modal-card">
+    <div class="modal-card-header">
+      <h5 class="modal-card-title text-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete <span id="deleteDiseaseName"></span>?</h5>
+    </div>
+    <div class="modal-card-body">
+      <p class="mb-0" id="deletePromptText">This will remove it from the Advisory Hub permanently.</p>
+    </div>
+    <div class="modal-card-footer d-flex justify-content-end gap-2">
+      <button class="btn btn-outline-light btn-sm px-4" style="border-color:rgba(255,255,255,0.15); font-weight:600;" onclick="closeDeleteModal()">Cancel</button>
+      <form id="deleteForm" method="post" action="">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm px-4 fw-600">Yes, Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── Toast notification ──────────────────────────────────────────────── */
+  .toast-alert {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+    border-radius: 10px;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: slideDown 0.35s ease-out;
+  }
+  .toast-alert.toast-danger {
+    background: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.25);
+    color: #f85149;
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ── Severity Badges ─────────────────────────────────────────────────── */
+  .badge-sev-low {
+    background: rgba(249, 168, 37, 0.15);
+    color: #f9a825;
+    border: 1px solid rgba(249, 168, 37, 0.3);
+  }
+  .badge-sev-medium {
+    background: rgba(239, 108, 0, 0.15);
+    color: #ef6c00;
+    border: 1px solid rgba(239, 108, 0, 0.3);
+  }
+  .badge-sev-severe {
+    background: rgba(198, 40, 40, 0.15);
+    color: #c62828;
+    border: 1px solid rgba(198, 40, 40, 0.3);
+  }
+
+  /* ── Modal Dialog CSS ────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    transition: all 0.3s ease;
+  }
+  .modal-overlay.d-none {
+    display: none !important;
+  }
+  .modal-card {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    animation: zoomIn 0.2s ease-out;
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(248,81,73,0.04);
+  }
+  .modal-card-body {
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    color: #8b949e;
+    line-height: 1.5;
+  }
+  .modal-card-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.2);
+  }
+
+  /* ── Button outline-plant for advisory link ─────────────────────────── */
+  .btn-outline-plant {
+    border-color: rgba(82, 183, 136, 0.4);
+    color: #52b788;
+    font-weight: 600;
+  }
+  .btn-outline-plant:hover {
+    background: #2d6a4f;
+    border-color: #2d6a4f;
+    color: #fff;
+  }
+</style>
+
+<script>
+  function confirmDelete(id, name) {
+    const modal = document.getElementById('deleteModal');
+    const nameEl = document.getElementById('deleteDiseaseName');
+    const form = document.getElementById('deleteForm');
+    
+    nameEl.textContent = name;
+    form.action = `/admin-panel/advisory/delete/${id}/`;
+    modal.classList.remove('d-none');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('d-none');
+  }
+
+  // Close modal when clicking outside card
+  window.onclick = function(event) {
+    const modal = document.getElementById('deleteModal');
+    if (event.target === modal) {
+      closeDeleteModal();
+    }
+  }
+
+  // Auto-dismiss success toast after 5 seconds
+  const toast = document.getElementById('successToast');
+  if (toast) {
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-12px)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  }
+</script>
+{% endblock %}

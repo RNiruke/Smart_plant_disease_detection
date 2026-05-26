@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% block title %}Disease Advisory Hub — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Header -->
+    <div class="dash-header mb-4">
+      <h1 class="page-title mb-1">🌿 Crop Disease Advisory Hub</h1>
+      <p class="text-muted small">Access expert-curated agronomic diagnoses, preventative actions, organic remedies, and chemical solutions.</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card border-0 mb-4 shadow-sm" style="background:#161b22; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+      <div class="card-body px-4 py-3">
+        <div class="input-group">
+          <span class="input-group-text border-0" style="background:#0d1117; color:#8b949e; border-radius:10px 0 0 10px;">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" id="searchBox" placeholder="Search by disease name..." class="form-control border-0" style="background:#0d1117; color:#fff; border-radius:0 10px 10px 0; font-size:0.9rem;" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Plant Filter Buttons -->
+    <div class="filter-strip mb-4">
+      <div class="d-flex flex-wrap gap-2">
+        <button class="filter-btn active" onclick="filterPlant('All', event)">All</button>
+        <button class="filter-btn" onclick="filterPlant('Apple', event)">🍎 Apple</button>
+        <button class="filter-btn" onclick="filterPlant('Blueberry', event)">🫐 Blueberry</button>
+        <button class="filter-btn" onclick="filterPlant('Cherry', event)">🍒 Cherry</button>
+        <button class="filter-btn" onclick="filterPlant('Corn', event)">🌽 Corn</button>
+        <button class="filter-btn" onclick="filterPlant('Grape', event)">🍇 Grape</button>
+        <button class="filter-btn" onclick="filterPlant('Orange', event)">🍊 Orange</button>
+        <button class="filter-btn" onclick="filterPlant('Peach', event)">🍑 Peach</button>
+        <button class="filter-btn" onclick="filterPlant('Pepper', event)">🌶️ Pepper</button>
+        <button class="filter-btn" onclick="filterPlant('Potato', event)">🥔 Potato</button>
+        <button class="filter-btn" onclick="filterPlant('Raspberry', event)">🫐 Raspberry</button>
+        <button class="filter-btn" onclick="filterPlant('Soybean', event)">🫘 Soybean</button>
+        <button class="filter-btn" onclick="filterPlant('Squash', event)">🎃 Squash</button>
+        <button class="filter-btn" onclick="filterPlant('Strawberry', event)">🍓 Strawberry</button>
+        <button class="filter-btn" onclick="filterPlant('Tomato', event)">🍅 Tomato</button>
+      </div>
+    </div>
+
+    <!-- Disease Advisory Cards Grid -->
+    {% if diseases %}
+    <div class="row g-3" id="cardsGrid">
+      {% for disease in diseases %}
+      <div class="col-xl-4 col-md-6 card-wrapper">
+        <div class="disease-card card h-100 border-0 adv-card"
+             data-plant="{{ disease.crop_host }}"
+             data-disease="{{ disease.disease_name }}">
+          <div class="card-body p-4 d-flex flex-column">
+            <!-- Top badges row -->
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span class="badge crop-badge">
+                🌱 {{ disease.crop_host }}
+              </span>
+              <span class="badge badge-sev-{{ disease.severity|lower }}">
+                {{ disease.severity }}
+              </span>
+            </div>
+            
+            <!-- Disease Name -->
+            <h3 class="card-title text-white fw-700 h5 mb-2" style="font-family:'Outfit',sans-serif;">
+              {{ disease.disease_name }}
+            </h3>
+            
+            <!-- Symptom preview -->
+            <p class="card-desc text-muted small mb-3 flex-grow-1">
+              {{ disease.primary_symptoms|truncatechars:80 }}
+            </p>
+            
+            <!-- Pathogen / Causes -->
+            <div class="card-pathogen mb-3">
+              <span class="x-small text-muted">
+                <strong style="color:#8b949e;">Pathogen:</strong> {{ disease.pathogen|truncatechars:40 }}
+              </span>
+            </div>
+            
+            <!-- Bottom -->
+            <div class="pt-3 border-top d-flex align-items-center justify-content-end" style="border-color:rgba(255,255,255,0.06) !important;">
+              <a href="{% url 'advisory:detail' disease.pk %}" class="btn btn-outline-plant btn-xs px-3">
+                Read Advice <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state text-center py-5 rounded" style="background:#161b22; border:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:3.5rem" class="mb-3">📚</div>
+      <h4 class="text-white fw-700 mb-2">No Advisory Profiles Found</h4>
+      <p class="text-muted small mx-auto mb-4" style="max-width:350px;">No disease advisory data has been added yet. Check back later or contact an administrator.</p>
+    </div>
+    {% endif %}
+
+    <!-- No Results (hidden by default, shown by JS) -->
+    <div class="empty-state text-center py-5 rounded d-none" id="noResults" style="background:#161b22; border:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:3.5rem" class="mb-3">🔍</div>
+      <h4 class="text-white fw-700 mb-2">No Matches Found</h4>
+      <p class="text-muted small mx-auto mb-4" style="max-width:350px;">No disease profiles match your current filter. Try adjusting your search or selecting a different crop.</p>
+      <button class="btn btn-ag btn-sm px-4 py-2" onclick="resetFilters()">Reset Filters</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── Filter Buttons ──────────────────────────────────────────────────── */
+  .filter-strip {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .filter-btn {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #8b949e;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .filter-btn:hover {
+    background: rgba(82, 183, 136, 0.08);
+    border-color: rgba(82, 183, 136, 0.3);
+    color: #52b788;
+  }
+  .filter-btn.active {
+    background: rgba(82, 183, 136, 0.15);
+    border-color: #52b788;
+    color: #52b788;
+    box-shadow: 0 0 12px rgba(82, 183, 136, 0.15);
+  }
+
+  /* ── Disease Cards ───────────────────────────────────────────────────── */
+  .adv-card {
+    background: #161b22 !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    overflow: hidden;
+  }
+  .adv-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(82, 183, 136, 0.3) !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(82, 183, 136, 0.15) !important;
+  }
+
+  /* ── Crop Badge ──────────────────────────────────────────────────────── */
+  .crop-badge {
+    background: rgba(82, 183, 136, 0.12) !important;
+    color: #52b788 !important;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* ── Severity Badges ─────────────────────────────────────────────────── */
+  .badge-sev-healthy {
+    background: #2d6a4f !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+  }
+  .badge-sev-low {
+    background: #ffc107 !important;
+    color: #000 !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+  }
+  .badge-sev-medium {
+    background: #fd7e14 !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+  }
+  .badge-sev-severe {
+    background: #dc3545 !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* ── Card Text Visibility ────────────────────────────────────────────── */
+  .card-desc {
+    color: #9ca3af !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-pathogen {
+    font-size: 12.5px;
+  }
+  .card-pathogen,
+  .card-pathogen span,
+  .card-pathogen strong {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn-xs {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .btn-outline-plant {
+    border-color: rgba(82, 183, 136, 0.4);
+    color: #52b788;
+  }
+  .btn-outline-plant:hover {
+    background: #2d6a4f;
+    border-color: #2d6a4f;
+    color: #fff;
+  }
+
+  /* ── Global Visibility Fix ───────────────────────────────────────────── */
+  .adv-card,
+  .adv-card *,
+  .adv-card p,
+  .adv-card span {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+</style>
+
+<script>
+  // ── Plant Filter ──────────────────────────────────────────────────────
+  function filterPlant(plant, event) {
+    const cards = document.querySelectorAll('.disease-card');
+    let visibleCount = 0;
+
+    // Also respect the current search query
+    const searchQuery = document.getElementById('searchBox').value.toLowerCase();
+
+    cards.forEach(card => {
+      const cardPlant = card.dataset.plant;
+      const cardDisease = card.dataset.disease.toLowerCase();
+      const matchesPlant = (plant === 'All' || cardPlant === plant);
+      const matchesSearch = (!searchQuery || cardDisease.includes(searchQuery));
+
+      if (matchesPlant && matchesSearch) {
+        card.closest('.card-wrapper').style.display = 'block';
+        visibleCount++;
+      } else {
+        card.closest('.card-wrapper').style.display = 'none';
+      }
+    });
+
+    // Update active button
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    if (event && event.target) {
+      event.target.classList.add('active');
+    }
+
+    // Show/hide no-results message
+    toggleNoResults(visibleCount);
+  }
+
+  // ── Search Filter ─────────────────────────────────────────────────────
+  document.getElementById('searchBox').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    const cards = document.querySelectorAll('.disease-card');
+
+    // Find currently active plant filter
+    const activeBtn = document.querySelector('.filter-btn.active');
+    const activePlant = activeBtn ? activeBtn.textContent.trim().replace(/^[^\w]*/, '').trim() : 'All';
+    // Extract just the plant name from button text (remove emoji)
+    const plantName = activePlant === 'All' ? 'All' : activePlant.replace(/[^\w\s]/g, '').trim();
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const cardDisease = card.dataset.disease.toLowerCase();
+      const cardPlant = card.dataset.plant;
+      const matchesSearch = (!query || cardDisease.includes(query));
+      const matchesPlant = (plantName === 'All' || cardPlant === plantName);
+
+      if (matchesSearch && matchesPlant) {
+        card.closest('.card-wrapper').style.display = 'block';
+        visibleCount++;
+      } else {
+        card.closest('.card-wrapper').style.display = 'none';
+      }
+    });
+
+    toggleNoResults(visibleCount);
+  });
+
+  // ── No Results Toggle ─────────────────────────────────────────────────
+  function toggleNoResults(count) {
+    const noResults = document.getElementById('noResults');
+    const grid = document.getElementById('cardsGrid');
+    if (noResults) {
+      if (count === 0) {
+        noResults.classList.remove('d-none');
+        if (grid) grid.classList.add('d-none');
+      } else {
+        noResults.classList.add('d-none');
+        if (grid) grid.classList.remove('d-none');
+      }
+    }
+  }
+
+  // ── Reset Filters ─────────────────────────────────────────────────────
+  function resetFilters() {
+    document.getElementById('searchBox').value = '';
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.filter-btn').classList.add('active'); // "All" is the first button
+    filterPlant('All', null);
+  }
+</script>
+{% endblock %}

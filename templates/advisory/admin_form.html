@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Back Button -->
+    <div class="mb-4">
+      <a href="{% url 'advisory:admin_table' %}" class="btn btn-outline-light btn-sm px-3" style="border-color:rgba(255,255,255,0.15);">
+        <i class="bi bi-arrow-left me-2"></i>Back to Disease Management
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="dash-header mb-4">
+      <h1 class="page-title mb-1">{% if form_mode == 'add' %}Add Disease Module{% else %}Edit Disease Module{% endif %}</h1>
+      <p class="text-muted small">Fill in the fields below to {% if form_mode == 'add' %}create a new{% else %}update the existing{% endif %} advisory profile.</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger border-0 mb-4 shadow-sm d-flex align-items-center gap-2" style="background:rgba(248,81,73,0.1); border:1px solid rgba(248,81,73,0.2) !important; color:#ff7b72; border-radius:10px;">
+      <i class="bi bi-exclamation-octagon-fill"></i>
+      <span class="small"><strong>Error:</strong> {{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Form Card -->
+    <div class="card border-0 mb-4 shadow-sm" style="background:#161b22; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+      <div class="card-body p-4">
+        <form method="post" action="{% if form_mode == 'edit' %}{% url 'advisory:admin_edit' disease.pk %}{% else %}{% url 'advisory:admin_add' %}{% endif %}" class="needs-validation" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
+          
+          <div class="row g-3 mb-4">
+            <!-- Disease Name -->
+            <div class="col-md-6">
+              <label for="disease_name" class="form-label fw-600 text-white small">Disease Name</label>
+              <input type="text" class="form-control premium-input" id="disease_name" name="disease_name" 
+                placeholder="e.g. Early Blight" required
+                value="{% if post_data %}{{ post_data.disease_name }}{% else %}{{ disease.disease_name|default:'' }}{% endif %}">
+              <div class="invalid-feedback x-small text-danger">Please enter the disease name.</div>
+            </div>
+
+            <!-- Crop Host -->
+            <div class="col-md-6">
+              <label for="plant" class="form-label fw-600 text-white small">Crop Host</label>
+              <input type="text" class="form-control premium-input" id="plant" name="plant" 
+                placeholder="e.g. Tomato" required
+                value="{% if post_data %}{{ post_data.plant }}{% else %}{{ disease.plant|default:'' }}{% endif %}">
+              <div class="invalid-feedback x-small text-danger">Please enter the crop host.</div>
+            </div>
+
+            <!-- Causative Agent -->
+            <div class="col-md-6">
+              <label for="disease" class="form-label fw-600 text-white small">Disease Label</label>
+              <input type="text" class="form-control premium-input" id="disease" name="disease" 
+                placeholder="e.g. Early blight" required
+                value="{% if post_data %}{{ post_data.disease }}{% else %}{{ disease.disease|default:'' }}{% endif %}">
+              <div class="invalid-feedback x-small text-danger">Please enter the disease label.</div>
+            </div>
+
+            <!-- Severity Dropdown -->
+            <div class="col-md-3">
+              <label for="severity_level" class="form-label fw-600 text-white small">Severity</label>
+              <select class="form-select premium-input" id="severity_level" name="severity_level" required>
+                {% if post_data %}
+                  <option value="Low" {% if post_data.severity_level == 'Low' %}selected{% endif %}>Low</option>
+                  <option value="Medium" {% if post_data.severity_level == 'Medium' %}selected{% endif %}>Medium</option>
+                  <option value="Severe" {% if post_data.severity_level == 'Severe' %}selected{% endif %}>Severe</option>
+                  <option value="Healthy" {% if post_data.severity_level == 'Healthy' %}selected{% endif %}>Healthy</option>
+                {% else %}
+                  <option value="Low" {% if disease and disease.severity_level == 'Low' %}selected{% endif %}>Low</option>
+                  <option value="Medium" {% if disease and disease.severity_level == 'Medium' %}selected{% endif %}>Medium</option>
+                  <option value="Severe" {% if disease and disease.severity_level == 'Severe' %}selected{% endif %}>Severe</option>
+                  <option value="Healthy" {% if disease and disease.severity_level == 'Healthy' %}selected{% endif %}>Healthy</option>
+                {% endif %}
+              </select>
+              <div class="invalid-feedback x-small text-danger">Please select severity.</div>
+            </div>
+
+            <!-- Pathogen -->
+            <div class="col-md-3">
+              <label for="disease_key" class="form-label fw-600 text-white small">Disease Key</label>
+              <input type="text" class="form-control premium-input" id="disease_key" name="disease_key" 
+                placeholder="e.g. Tomato___Early_blight" required
+                value="{% if post_data %}{{ post_data.disease_key }}{% else %}{{ disease.disease_key|default:'' }}{% endif %}">
+              <div class="invalid-feedback x-small text-danger">Please enter the disease key.</div>
+            </div>
+          </div>
+
+          <!-- Description / Clinical Overview -->
+          <div class="mb-4">
+            <label for="causes" class="form-label fw-600 text-white small">Causes / Clinical Overview</label>
+            <textarea class="form-control premium-input" id="causes" name="causes" rows="4" 
+                      placeholder="Provide an in-depth clinical overview of the infection..." required>{% if post_data %}{{ post_data.causes }}{% else %}{{ disease.causes|default:'' }}{% endif %}</textarea>
+            <div class="invalid-feedback x-small text-danger">Please provide the causes.</div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <!-- Primary Symptoms -->
+            <div class="col-md-6">
+              <label for="symptoms" class="form-label fw-600 text-white small">Primary Symptoms <span class="text-muted fw-400">(one per line)</span></label>
+              <textarea class="form-control premium-input" id="symptoms" name="symptoms" rows="5" 
+                        placeholder="e.g. Dark concentric spots on older leaves&#10;Yellow halo around lesions&#10;Stem lesions at soil level" required>{% if post_data %}{{ post_data.symptoms }}{% else %}{{ disease.symptoms|default:'' }}{% endif %}</textarea>
+              <div class="invalid-feedback x-small text-danger">Please list at least one symptom.</div>
+            </div>
+
+            <!-- Preventative Culturing -->
+            <div class="col-md-6">
+              <label for="prevention" class="form-label fw-600 text-white small">Preventative Culturing <span class="text-muted fw-400">(one per line)</span></label>
+              <textarea class="form-control premium-input" id="prevention" name="prevention" rows="5" 
+                        placeholder="e.g. Practice 3-year crop rotation&#10;Ensure adequate spacing for air flow&#10;Avoid overhead watering" required>{% if post_data %}{{ post_data.prevention }}{% else %}{{ disease.prevention|default:'' }}{% endif %}</textarea>
+              <div class="invalid-feedback x-small text-danger">Please list at least one preventative measure.</div>
+            </div>
+
+            <!-- Organic Treatment -->
+            <div class="col-md-6">
+              <label for="organic_treatment" class="form-label fw-600 text-white small">Organic & Biological Treatment <span class="text-muted fw-400">(one per line)</span></label>
+              <textarea class="form-control premium-input" id="organic_treatment" name="organic_treatment" rows="5" 
+                        placeholder="e.g. Apply copper-based organic fungicides&#10;Spray with Bacillus subtilis formulations&#10;Remove and destroy affected crop debris" required>{% if post_data %}{{ post_data.organic_treatment }}{% else %}{{ disease.organic_treatment|default:'' }}{% endif %}</textarea>
+              <div class="invalid-feedback x-small text-danger">Please list at least one organic solution.</div>
+            </div>
+
+            <!-- Chemical Controls -->
+            <div class="col-md-6">
+              <label for="chemical_treatment" class="form-label fw-600 text-white small">Chemical Controls <span class="text-muted fw-400">(one per line)</span></label>
+              <textarea class="form-control premium-input" id="chemical_treatment" name="chemical_treatment" rows="5" 
+                        placeholder="e.g. Use Chlorothalonil-based fungicides&#10;Apply Mancozeb preventatively&#10;Rotate active ingredients to prevent resistance" required>{% if post_data %}{{ post_data.chemical_treatment }}{% else %}{{ disease.chemical_treatment|default:'' }}{% endif %}</textarea>
+              <div class="invalid-feedback x-small text-danger">Please list at least one chemical control.</div>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-flex align-items-center gap-3 pt-3 border-top" style="border-color:rgba(255,255,255,0.06) !important;">
+            <button type="submit" class="btn btn-ag text-white px-5 py-2.5">
+              {% if form_mode == 'add' %}Create Module{% else %}Save Changes{% endif %}
+            </button>
+            <a href="{% url 'advisory:admin_table' %}" class="btn btn-outline-light px-4 py-2.5" style="border-color:rgba(255,255,255,0.15); border-radius:9px; font-weight:600;">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── Premium Forms Accent Styling ───────────────────────────────────── */
+  .premium-input {
+    background: #1a1a1a !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    font-size: 0.9rem !important;
+    padding: 0.7rem 0.95rem !important;
+    transition: all 0.25s ease;
+  }
+  .premium-input:focus {
+    background: #1a1a1a !important;
+    border-color: #52b788 !important;
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15) !important;
+    color: #fff !important;
+  }
+  .premium-input::placeholder {
+    color: #55585d !important;
+  }
+  .form-label {
+    margin-bottom: 0.5rem;
+    font-size: 14px !important;
+  }
+  textarea.premium-input {
+    line-height: 1.5 !important;
+  }
+</style>
+
+<script>
+  // Bootstrap 5 custom validation enabler
+  (function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add('was-validated')
+        }, false)
+      })
+  })()
+</script>
+{% endblock %}

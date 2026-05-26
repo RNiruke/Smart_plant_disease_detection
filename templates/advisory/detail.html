@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% block title %}Treatment Advice: {{ advisory.disease_name }} — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Top Bar: Back Button & Disease Key -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+      <a href="{% url 'advisory:list' %}" class="btn btn-outline-light btn-sm px-3 d-inline-flex align-items-center gap-2" style="border-color:rgba(255,255,255,0.15); font-weight:600;">
+        <i class="bi bi-arrow-left"></i> Back to Advisory Hub
+      </a>
+      <span class="text-muted small">Disease Key: <code class="text-success" style="background:rgba(82,183,136,0.08); padding:2px 8px; border-radius:4px; font-size:0.8rem;">#{{ advisory.pk }}</code></span>
+    </div>
+
+    <!-- Hero Card: Disease Identity -->
+    <div class="card border-0 mb-4 overflow-hidden" style="background:#161b22; border-radius:16px; border:1px solid rgba(255,255,255,0.06);">
+      <div class="p-4 text-white" style="background:linear-gradient(135deg, #1b4332 0%, #0d1b15 100%); border-bottom:1px solid rgba(255,255,255,0.06);">
+        <!-- Badges -->
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <span class="badge crop-badge-lg">
+            🌱 {{ advisory.crop_host }}
+          </span>
+          <span class="badge badge-sev-{{ advisory.severity|lower }} px-3 py-2" style="font-size:0.8rem;">
+            Severity: {{ advisory.severity }}
+          </span>
+        </div>
+        <!-- Disease Title -->
+        <h1 class="h2 fw-800 mb-2" style="font-family:'Outfit',sans-serif;">{{ advisory.disease_name }}</h1>
+        <p class="mb-0 small" style="color:rgba(255,255,255,0.6);">
+          <strong class="text-white">Causative Agent:</strong> {{ advisory.causative_agent }}
+        </p>
+      </div>
+
+      <!-- Urgency Alert Banner -->
+      {% if advisory.severity == 'Severe' %}
+      <div class="urgency-alert urgency-severe">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span><strong>Urgent Action Required:</strong> This infection is classified as <strong>Severe</strong>. Apply preventative treatments to all adjacent host crops immediately to prevent farm-wide spreading.</span>
+      </div>
+      {% elif advisory.severity == 'Medium' %}
+      <div class="urgency-alert urgency-medium">
+        <i class="bi bi-exclamation-circle-fill me-2"></i>
+        <span><strong>Moderate Risk:</strong> This infection requires timely intervention. Monitor affected plants and begin treatment protocols within 48 hours.</span>
+      </div>
+      {% elif advisory.severity == 'Low' %}
+      <div class="urgency-alert urgency-low">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <span><strong>Low Risk:</strong> This condition is manageable with routine cultural practices. Monitor for progression and apply preventative measures.</span>
+      </div>
+      {% else %}
+      <div class="urgency-alert urgency-healthy">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span><strong>Healthy Status:</strong> No immediate treatment required. Continue with standard crop maintenance practices.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Two Column Detail Layout -->
+    <div class="row g-4">
+      <!-- LEFT COLUMN: Clinical Info -->
+      <div class="col-lg-6">
+        <!-- Clinical Overview -->
+        <div class="detail-card mb-4">
+          <div class="detail-card-header">
+            <h4 class="detail-card-title">
+              <i class="bi bi-clipboard2-pulse text-plant me-2"></i>Clinical Overview
+            </h4>
+          </div>
+          <div class="detail-card-body">
+            <p class="detail-text">{{ advisory.description }}</p>
+          </div>
+        </div>
+
+        <!-- Primary Symptoms -->
+        <div class="detail-card mb-4">
+          <div class="detail-card-header">
+            <h4 class="detail-card-title">
+              <i class="bi bi-exclamation-triangle text-warning me-2"></i>Primary Symptoms
+            </h4>
+          </div>
+          <div class="detail-card-body">
+            <ul class="detail-list">
+              {% for symptom in advisory.get_primary_symptoms_list %}
+              <li class="detail-list-item">
+                <span class="list-icon warning-icon">
+                  <i class="bi bi-patch-exclamation-fill"></i>
+                </span>
+                <span class="list-text">{{ symptom }}</span>
+              </li>
+              {% empty %}
+              <li class="detail-list-item text-muted">No symptoms listed.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Causes / Pathogen -->
+        <div class="detail-card mb-4">
+          <div class="detail-card-header">
+            <h4 class="detail-card-title">
+              <i class="bi bi-bug text-danger me-2"></i>Causative Pathogen
+            </h4>
+          </div>
+          <div class="detail-card-body">
+            <div class="d-flex align-items-start gap-3 mb-3">
+              <div class="pathogen-icon-wrap">
+                <i class="bi bi-virus2"></i>
+              </div>
+              <div>
+                <p class="detail-text mb-1"><strong class="text-white">Type:</strong> {{ advisory.pathogen }}</p>
+                <p class="detail-text mb-0"><strong class="text-white">Agent:</strong> {{ advisory.causative_agent }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preventative Culturing -->
+        <div class="detail-card mb-4">
+          <div class="detail-card-header">
+            <h4 class="detail-card-title">
+              <i class="bi bi-shield-check text-success me-2"></i>Prevention Methods
+            </h4>
+          </div>
+          <div class="detail-card-body">
+            <ul class="detail-list">
+              {% for prev in advisory.get_preventative_culturing_list %}
+              <li class="detail-list-item">
+                <span class="list-icon success-icon">
+                  <i class="bi bi-check-circle-fill"></i>
+                </span>
+                <span class="list-text">{{ prev }}</span>
+              </li>
+              {% empty %}
+              <li class="detail-list-item text-muted">No prevention methods listed.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Treatment Plans -->
+      <div class="col-lg-6 d-flex flex-column gap-4">
+        <!-- Organic & Biological Treatment -->
+        <div class="card border-0 shadow-sm overflow-hidden" style="background:#161b22; border-radius:16px; border:1px solid rgba(82,183,136,0.15);">
+          <div class="p-4" style="background:rgba(82,183,136,0.06); border-bottom:1px solid rgba(82,183,136,0.12);">
+            <div class="d-flex align-items-center justify-content-between">
+              <h3 class="h5 fw-700 text-success mb-0 d-flex align-items-center gap-2" style="font-family:'Outfit',sans-serif;">
+                <i class="bi bi-flower1"></i>Organic & Biological Treatment
+              </h3>
+              <span class="badge recommended-badge">RECOMMENDED</span>
+            </div>
+            <p class="text-muted small mb-0 mt-1">Eco-safe cultural controls and organic biofungicides.</p>
+          </div>
+          <div class="card-body p-4">
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+              {% for org in advisory.get_organic_treatment_list %}
+              <li class="d-flex align-items-start gap-3 small" style="line-height:1.55;">
+                <span class="treatment-check green-check">
+                  <i class="bi bi-check-lg"></i>
+                </span>
+                <span class="treatment-text">{{ org }}</span>
+              </li>
+              {% empty %}
+              <li class="text-muted small">No organic treatments listed.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Chemical Controls -->
+        <div class="card border-0 shadow-sm overflow-hidden" style="background:#161b22; border-radius:16px; border:1px solid rgba(13,148,136,0.15);">
+          <div class="p-4" style="background:rgba(13,148,136,0.06); border-bottom:1px solid rgba(13,148,136,0.12);">
+            <h3 class="h5 fw-700 mb-0 d-flex align-items-center gap-2" style="font-family:'Outfit',sans-serif; color:#0d9488;">
+              <i class="bi bi-prescription2"></i>Chemical Controls
+            </h3>
+            <p class="text-muted small mb-0 mt-1">Specific active chemical compounds for rapid infection control.</p>
+          </div>
+          <div class="card-body p-4">
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+              {% for chem in advisory.get_chemical_controls_list %}
+              <li class="d-flex align-items-start gap-3 small" style="line-height:1.55;">
+                <span class="treatment-check teal-check">
+                  <i class="bi bi-droplet"></i>
+                </span>
+                <span class="treatment-text">{{ chem }}</span>
+              </li>
+              {% empty %}
+              <li class="text-muted small">No chemical controls listed.</li>
+              {% endfor %}
+            </ul>
+
+            {% if advisory.severity == 'Severe' %}
+            <div class="mt-4 p-3 rounded-3 d-flex align-items-start gap-3" style="background:rgba(198,40,40,0.08); border:1px solid rgba(198,40,40,0.15);">
+              <i class="bi bi-info-circle-fill text-danger mt-1 flex-shrink-0"></i>
+              <span class="x-small text-danger" style="font-size:0.78rem; line-height:1.45;">
+                <strong>Critical Advisory:</strong> With Severe classification, rotate chemical active ingredients each application cycle to prevent resistance build-up. Consult a local agronomist for site-specific recommendations.
+              </span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ── Crop Badge (Large) ──────────────────────────────────────────────── */
+  .crop-badge-lg {
+    background: rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+  }
+
+  /* ── Severity Badges ─────────────────────────────────────────────────── */
+  .badge-sev-healthy {
+    background: #2d6a4f !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .badge-sev-low {
+    background: #ffc107 !important;
+    color: #000 !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .badge-sev-medium {
+    background: #fd7e14 !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .badge-sev-severe {
+    background: #dc3545 !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  /* ── Urgency Alert Banners ───────────────────────────────────────────── */
+  .urgency-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .urgency-severe {
+    background: rgba(220, 53, 69, 0.08);
+    border-bottom: 1px solid rgba(220, 53, 69, 0.15);
+    color: #f87171;
+  }
+  .urgency-medium {
+    background: rgba(253, 126, 20, 0.08);
+    border-bottom: 1px solid rgba(253, 126, 20, 0.15);
+    color: #fb923c;
+  }
+  .urgency-low {
+    background: rgba(255, 193, 7, 0.08);
+    border-bottom: 1px solid rgba(255, 193, 7, 0.15);
+    color: #fbbf24;
+  }
+  .urgency-healthy {
+    background: rgba(45, 106, 79, 0.08);
+    border-bottom: 1px solid rgba(45, 106, 79, 0.15);
+    color: #4ade80;
+  }
+
+  /* ── Detail Cards ────────────────────────────────────────────────────── */
+  .detail-card {
+    background: #161b22;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .detail-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.015);
+  }
+  .detail-card-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+  .detail-card-body {
+    padding: 1.25rem;
+  }
+  .detail-text {
+    color: #cbd5e1 !important;
+    font-size: 14px !important;
+    line-height: 1.65 !important;
+    margin-bottom: 0;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+
+  /* ── Detail Lists ────────────────────────────────────────────────────── */
+  .detail-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .detail-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .list-icon {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+  .warning-icon { color: #fbbf24; }
+  .success-icon { color: #4ade80; }
+  .list-text {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+
+  /* ── Pathogen Icon ───────────────────────────────────────────────────── */
+  .pathogen-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(220, 53, 69, 0.1);
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Treatment Checks ────────────────────────────────────────────────── */
+  .treatment-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+  }
+  .green-check {
+    background: rgba(82, 183, 136, 0.12);
+    color: #52b788;
+  }
+  .teal-check {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0d9488;
+  }
+  .treatment-text {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+
+  /* ── Recommended Badge ───────────────────────────────────────────────── */
+  .recommended-badge {
+    background: rgba(82, 183, 136, 0.12) !important;
+    color: #52b788 !important;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  /* ── Global Visibility Fix ───────────────────────────────────────────── */
+  .card-body,
+  .card-body *,
+  .detail-card-body,
+  .detail-card-body * {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — PlantAI{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  {% include 'partials/sidebar.html' %}
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <div class="dash-header mb-4">
+      <h1 class="page-title mb-1">My Profile</h1>
+      <p class="text-muted small">Manage your account information and security settings</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- ── LEFT COLUMN: Summary Card ───────────────────────────────── -->
+      <div class="col-lg-4 col-xl-3">
+        <div class="profile-summary-card text-center" style="background:#161b22; border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:2rem; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+          <!-- Avatar Picture -->
+          <div class="profile-avatar-wrap mx-auto mb-3" style="width:100px; height:100px; position:relative;">
+            {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="Avatar" class="profile-avatar-img" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #52b788;" />
+            {% else %}
+              <div class="profile-avatar-initials d-flex align-items-center justify-content-center" style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, #2d6a4f, #52b788); color:#fff; font-size:2.2rem; font-weight:800; font-family:'Outfit',sans-serif;">
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              </div>
+            {% endif %}
+          </div>
+
+          <h5 class="fw-700 text-white mb-1" style="font-family:'Outfit',sans-serif;">{{ user.get_full_name|default:user.username }}</h5>
+          <p class="text-muted small mb-2">@{{ user.username }}</p>
+          <p class="text-muted x-small mb-4" style="font-size:0.8rem; word-break:break-all;">{{ user.email }}</p>
+
+          <div class="badge bg-success-soft px-3 py-2" style="background:rgba(82,183,136,0.1); color:#52b788; border-radius:30px; font-size:0.8rem;">
+            <i class="bi bi-shield-check me-1"></i>Active Account
+          </div>
+
+          <hr class="border-secondary my-4" />
+
+          <p class="text-muted x-small mb-0" style="font-size:0.75rem;">
+            Farmer since {{ user.date_joined|date:"F Y" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- ── RIGHT COLUMN: Form & Security Tabs ──────────────────────── -->
+      <div class="col-lg-8 col-xl-9">
+        <!-- Tabs Navigation -->
+        <ul class="nav profile-tabs mb-4" id="profileTabs" style="border-bottom:1px solid rgba(255,255,255,0.07); display:flex; gap:10px; padding:0; list-style:none;">
+          <li class="nav-item">
+            <button class="profile-tab-btn {% if active_tab != 'security' %}active{% endif %}" data-tab="info" onclick="switchTab('info')" style="background:none; border:none; color:#7d8590; padding:10px 20px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s;">
+              <i class="bi bi-person me-2"></i>Personal Info
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="profile-tab-btn {% if active_tab == 'security' %}active{% endif %}" data-tab="security" onclick="switchTab('security')" style="background:none; border:none; color:#7d8590; padding:10px 20px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s;">
+              <i class="bi bi-shield-lock me-2"></i>Security
+            </button>
+          </li>
+        </ul>
+
+        <!-- Tab 1: Personal Info Panel -->
+        <div id="tab-info" class="profile-tab-panel {% if active_tab == 'security' %}d-none{% endif %}">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile" />
+
+            <div class="profile-section-card mb-4" style="background:#161b22; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:2rem;">
+              <h6 class="profile-section-title mb-4" style="font-family:'Outfit',sans-serif; font-size:1.1rem; color:#52b788; display:flex; align-items:center; gap:8px;">
+                <i class="bi bi-person-fill"></i>Personal Information
+              </h6>
+              
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">First Name</label>
+                  {{ profile_form.first_name }}
+                  {% if profile_form.first_name.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.first_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">Last Name</label>
+                  {{ profile_form.last_name }}
+                  {% if profile_form.last_name.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.last_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">Email Address</label>
+                  {{ profile_form.email }}
+                  {% if profile_form.email.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.email.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">Phone Number</label>
+                  {{ profile_form.phone_number }}
+                  {% if profile_form.phone_number.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.phone_number.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12 mt-4">
+                  <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">Profile Photo</label>
+                  {{ profile_form.profile_picture }}
+                  {% if profile_form.profile_picture.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.profile_picture.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-ag px-5 btn-lg">
+              <i class="bi bi-check2 me-2"></i>Save Changes
+            </button>
+          </form>
+        </div>
+
+        <!-- Tab 2: Security Panel -->
+        <div id="tab-security" class="profile-tab-panel {% if active_tab != 'security' %}d-none{% endif %}">
+          <div class="profile-section-card" style="background:#161b22; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:2rem;">
+            <h6 class="profile-section-title mb-2" style="font-family:'Outfit',sans-serif; font-size:1.1rem; color:#52b788; display:flex; align-items:center; gap:8px;">
+              <i class="bi bi-lock-fill"></i>Change Password
+            </h6>
+            <p class="text-muted small mb-4">Update your password to secure your account.</p>
+
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <input type="hidden" name="action" value="change_password" />
+
+              <div class="row g-3">
+                {% for field in password_form %}
+                  <div class="col-12">
+                    <label class="form-label" style="font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.65);">{{ field.label }}</label>
+                    <div style="position:relative;">
+                      {{ field }}
+                      <button type="button" class="eye-btn" onclick="toggleField('{{ field.id_for_label }}', this)" tabindex="-1" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#7d8590; cursor:pointer;">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </div>
+                    {% if field.errors %}
+                      <div class="text-danger small mt-1">{{ field.errors.0 }}</div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+
+                <div class="col-12 mt-4">
+                  <button type="submit" class="btn btn-ag px-5 btn-lg">
+                    <i class="bi bi-shield-lock me-2"></i>Update Password
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .profile-tab-btn.active {
+    color: #52b788 !important;
+    border-bottom-color: #52b788 !important;
+  }
+  
+  /* Form Inputs Styling */
+  .profile-tab-panel input.form-control,
+  .profile-tab-panel input[type="file"] {
+    background: #1c2128 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e6edf3 !important;
+    border-radius: 9px !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 0.88rem;
+    width: 100%;
+  }
+  
+  .profile-tab-panel input.form-control:focus {
+    border-color: #52b788 !important;
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15) !important;
+    outline: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.profile-tab-panel').forEach(p => p.classList.add('d-none'));
+  document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
+  
+  document.getElementById('tab-' + tab).classList.remove('d-none');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+}
+
+function toggleField(id, btn) {
+  const inp = document.getElementById(id);
+  const icon = btn.querySelector('i');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+</script>
+{% endblock %}
