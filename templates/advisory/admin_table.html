@@ -60,7 +60,9 @@
             {% for disease in diseases %}
             <tr>
               <td class="fw-600 text-muted">{{ forloop.counter }}</td>
-              <td class="fw-700 text-white" style="font-family:'Outfit',sans-serif;">{{ disease.disease_name }}</td>
+              <td class="disease-name-cell fw-700" style="font-family:'Outfit',sans-serif; color:#1a202c !important; opacity:1 !important; filter:none !important; text-shadow:none !important;">
+                {{ disease.disease_name }}
+              </td>
               <td class="text-muted small">{{ disease.plant }}</td>
               <td>
                 <span class="badge badge-sev-{{ disease.severity_level|lower }} px-2 py-1" style="font-size:0.73rem; border-radius:6px; font-weight:600;">
@@ -138,6 +140,14 @@
   @keyframes slideDown {
     from { transform: translateY(-12px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+
+  .disease-name-cell {
+    color: #1a202c !important;
+    opacity: 1 !important;
+    filter: none !important;
+    text-shadow: none !important;
+    -webkit-text-fill-color: #1a202c !important;
   }
 
   /* ── Severity Badges ─────────────────────────────────────────────────── */

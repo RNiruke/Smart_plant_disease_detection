@@ -2,8 +2,10 @@
 {% load i18n %}
 {% block title %}Crop Advisory Hub{% endblock %}
 {% block content %}
+<div class="dashboard-layout">
+  {% include 'partials/sidebar.html' %}
 
-<div style="background:#0d1117; min-height:100vh; padding:2rem;">
+  <main class="dashboard-main">
 
   <!-- Header -->
   <div style="margin-bottom:2rem;">
@@ -184,7 +186,6 @@
     {% endfor %}
 
   </div>
-</div>
 
 <script>
 // Card hover effects
@@ -247,5 +248,7 @@ document.getElementById('searchBox').addEventListener('input', function() {
     document.getElementById('countDisplay').textContent = visible;
 });
 </script>
+  </main>
+</div>
 
 {% endblock %}
